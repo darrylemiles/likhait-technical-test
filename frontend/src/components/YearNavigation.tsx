@@ -10,6 +10,10 @@ export function YearNavigation({
   currentYear,
   onYearChange,
 }: YearNavigationProps) {
+  const currentCalendarYear = new Date().getFullYear();
+  const isNextYearDisabled = currentYear >= currentCalendarYear;
+  const disabledTooltip = "Future dates cannot be used for expenses.";
+
   const containerStyle: React.CSSProperties = {
     display: "flex",
     alignItems: "center",
@@ -29,6 +33,12 @@ export function YearNavigation({
     fontSize: "18px",
     color: COLORS.secondary.s08,
     transition: "all 0.2s",
+  };
+
+  const disabledButtonStyle: React.CSSProperties = {
+    ...buttonStyle,
+    cursor: "not-allowed",
+    opacity: 0.5,
   };
 
   const yearStyle: React.CSSProperties = {
@@ -57,16 +67,24 @@ export function YearNavigation({
       </button>
       <div style={yearStyle}>{currentYear}</div>
       <button
-        style={buttonStyle}
-        onClick={() => onYearChange(currentYear + 1)}
+        style={isNextYearDisabled ? disabledButtonStyle : buttonStyle}
+        onClick={() => {
+          if (!isNextYearDisabled) {
+            onYearChange(currentYear + 1);
+          }
+        }}
+        disabled={isNextYearDisabled}
         onMouseEnter={(e) => {
+          if (isNextYearDisabled) return;
           e.currentTarget.style.background = COLORS.secondary.s02;
           e.currentTarget.style.borderColor = COLORS.secondary.s05;
         }}
         onMouseLeave={(e) => {
+          if (isNextYearDisabled) return;
           e.currentTarget.style.background = "white";
           e.currentTarget.style.borderColor = COLORS.secondary.s04;
         }}
+        title={isNextYearDisabled ? disabledTooltip : "Next year"}
       >
         →
       </button>

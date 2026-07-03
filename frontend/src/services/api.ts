@@ -22,6 +22,22 @@ function hasMatchingCategory(categories: Category[], name: string): Category | u
   );
 }
 
+async function getApiErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const data = await response.json();
+    if (Array.isArray(data?.errors) && data.errors.length > 0) {
+      return data.errors.join(", ");
+    }
+  } catch {
+    // Keep fallback error message when response body is not JSON.
+  }
+
+  return fallback;
+}
+
 /**
  * Fetch all expenses
  */
@@ -77,16 +93,7 @@ export async function createCategory(name: string): Promise<Category> {
   });
 
   if (!response.ok) {
-    let errorMessage = "Failed to create category";
-    try {
-      const data = await response.json();
-      if (Array.isArray(data?.errors) && data.errors.length > 0) {
-        errorMessage = data.errors.join(", ");
-      }
-    } catch {
-      // Keep fallback error message when response body is not JSON.
-    }
-    throw new Error(errorMessage);
+    throw new Error(await getApiErrorMessage(response, "Failed to create category"));
   }
 
   return response.json();
@@ -101,16 +108,7 @@ export async function deleteCategory(id: number): Promise<void> {
   });
 
   if (!response.ok) {
-    let errorMessage = "Failed to delete category";
-    try {
-      const data = await response.json();
-      if (Array.isArray(data?.errors) && data.errors.length > 0) {
-        errorMessage = data.errors.join(", ");
-      }
-    } catch {
-      // Keep fallback error message when response body is not JSON.
-    }
-    throw new Error(errorMessage);
+    throw new Error(await getApiErrorMessage(response, "Failed to delete category"));
   }
 }
 
@@ -142,7 +140,7 @@ export async function createExpense(data: ExpenseFormData): Promise<Expense> {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to create expense");
+    throw new Error(await getApiErrorMessage(response, "Failed to create expense"));
   }
 
   return response.json();
@@ -183,7 +181,7 @@ export async function updateExpense(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to update expense");
+    throw new Error(await getApiErrorMessage(response, "Failed to update expense"));
   }
 
   return response.json();

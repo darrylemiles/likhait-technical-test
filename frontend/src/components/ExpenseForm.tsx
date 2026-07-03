@@ -14,6 +14,7 @@ import {
   normalizeCategoryName,
 } from "../services/api";
 import { ManageCategoriesModal } from "./ManageCategoriesModal";
+import { getTodayDateString } from "../utils/expenseUtils";
 
 interface ExpenseFormProps {
   initialData?: Partial<ExpenseFormData>;
@@ -32,6 +33,7 @@ export function ExpenseForm({
   const [categoryError, setCategoryError] = React.useState<string | undefined>();
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] =
     React.useState(false);
+  const today = getTodayDateString();
 
   const loadCategories = React.useCallback(async () => {
     try {
@@ -75,14 +77,20 @@ export function ExpenseForm({
 
   const submitWithCategory = React.useCallback(
     async (data: ExpenseFormData): Promise<void> => {
+      setCategoryError(undefined);
+
+      const categoryName = await resolveCategoryName(data.category).catch(
+        (error) => {
+          const message =
+            error instanceof Error ? error.message : "Failed to save category";
+          setCategoryError(message);
+          throw error;
+        },
+      );
+
       try {
-        setCategoryError(undefined);
-        const categoryName = await resolveCategoryName(data.category);
         await onSubmit({ ...data, category: categoryName });
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to save category";
-        setCategoryError(message);
         throw error;
       }
     },
@@ -106,6 +114,7 @@ export function ExpenseForm({
     gap: "0.5rem",
     marginTop: "0.5rem",
     flexWrap: "wrap",
+    justifyContent: "flex-end"
   };
 
   const handleCategoryChange = (value: string) => {
@@ -163,6 +172,8 @@ export function ExpenseForm({
           value={formData.date}
           onChange={(e) => handleChange("date", e.target.value)}
           error={errors.date}
+          max={today}
+          title="Future dates cannot be used for expenses."
           fullWidth
           required
         />
@@ -170,14 +181,6 @@ export function ExpenseForm({
         <div style={buttonGroupStyle}>
           <Button type="submit" variant="primary" disabled={isSubmitting}>
             {isSubmitting ? "Submitting..." : submitLabel}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setIsManageCategoriesOpen(true)}
-            disabled={isSubmitting}
-          >
-            Manage Categories
           </Button>
           {onCancel && (
             <Button
