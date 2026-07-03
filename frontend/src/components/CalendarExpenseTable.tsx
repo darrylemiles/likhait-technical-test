@@ -120,7 +120,7 @@ export function CalendarExpenseTable({
     return (
       <div style={tableStyle}>
         <div style={emptyStyle}>
-          No expenses found. Add your first expense to get started!
+          No expenses found. Add your first expense for this month to get started!
         </div>
       </div>
     );
