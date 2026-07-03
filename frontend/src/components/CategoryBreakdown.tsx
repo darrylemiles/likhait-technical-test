@@ -1,6 +1,7 @@
 import React from "react";
 import { CATEGORY_EMOJIS } from "../constants/categoryEmojis";
 import { COLORS } from "../constants/colors";
+import { formatCurrency } from "../utils/expenseUtils";
 
 interface CategoryData {
   category: string;
@@ -20,10 +21,6 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   totalCount,
 }) => {
   const [isCollapsed, setIsCollapsed] = React.useState(true);
-
-  const formatAmount = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
-  };
 
   const containerStyle: React.CSSProperties = {
     background: "white",
@@ -147,7 +144,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
         }}
       >
         <span style={totalLabelStyle}>TOTAL:</span>
-        <span style={totalAmountStyle}>{formatAmount(total)}</span>
+        <span style={totalAmountStyle}>{formatCurrency(total)}</span>
         <span style={totalCountStyle}>({totalCount} transactions)</span>
         <button
           style={toggleButtonStyle}
@@ -210,7 +207,9 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                   </div>
                 </div>
               </div>
-              <div style={itemAmountStyle}>{formatAmount(category.amount)}</div>
+              <div style={itemAmountStyle}>
+                {formatCurrency(category.amount)}
+              </div>
             </div>
           ))}
         </div>

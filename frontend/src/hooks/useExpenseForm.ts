@@ -4,7 +4,12 @@
 
 import { useState } from "react";
 import { ExpenseFormData } from "../types";
-import { getTodayDateString, isFutureDate } from "../utils/expenseUtils";
+import {
+  formatCurrencyInput,
+  getTodayDateString,
+  isFutureDate,
+  normalizeCurrencyInput,
+} from "../utils/expenseUtils";
 
 interface UseExpenseFormProps {
   initialData?: Partial<ExpenseFormData>;
@@ -13,7 +18,7 @@ interface UseExpenseFormProps {
 
 export function useExpenseForm({ initialData, onSubmit }: UseExpenseFormProps) {
   const [formData, setFormData] = useState<ExpenseFormData>({
-    amount: initialData?.amount || "",
+    amount: initialData?.amount ? formatCurrencyInput(initialData.amount) : "",
     description: initialData?.description || "",
     category: initialData?.category || "",
     date: initialData?.date || getTodayDateString(),
@@ -32,8 +37,14 @@ export function useExpenseForm({ initialData, onSubmit }: UseExpenseFormProps) {
 
   const validateForm = (): boolean => {
     const newErrors: Partial<ExpenseFormData> = {};
+    const normalizedAmount = normalizeCurrencyInput(formData.amount);
+    const amount = Number(normalizedAmount);
 
-    if (!formData.amount || Number(formData.amount) <= 0) {
+    if (
+      !formData.amount ||
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
       newErrors.amount = "Amount must be greater than 0";
     }
 
@@ -64,7 +75,10 @@ export function useExpenseForm({ initialData, onSubmit }: UseExpenseFormProps) {
 
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      await onSubmit({
+        ...formData,
+        amount: normalizeCurrencyInput(formData.amount),
+      });
       // Reset form on success
       setFormData({
         amount: "",
@@ -88,7 +102,7 @@ export function useExpenseForm({ initialData, onSubmit }: UseExpenseFormProps) {
 
   const resetForm = () => {
     setFormData({
-      amount: initialData?.amount || "",
+      amount: initialData?.amount ? formatCurrencyInput(initialData.amount) : "",
       description: initialData?.description || "",
       category: initialData?.category || "",
       date: initialData?.date || getTodayDateString(),

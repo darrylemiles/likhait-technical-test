@@ -4,6 +4,13 @@
 
 import { Expense } from "../types";
 
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 /**
  * Calculate total amount from an array of expenses
  */
@@ -15,7 +22,36 @@ export function calculateTotal(expenses: Expense[]): number {
  * Format currency amount
  */
 export function formatCurrency(amount: number): string {
-  return `$${amount.toFixed(2)}`;
+  return currencyFormatter.format(amount);
+}
+
+/**
+ * Strip display-only currency formatting before validation or API submission.
+ */
+export function normalizeCurrencyInput(value: string): string {
+  return value.replace(/[$,\s]/g, "");
+}
+
+/**
+ * Format an amount for editable form fields without adding the currency symbol.
+ */
+export function formatCurrencyInput(value: string): string {
+  const normalizedValue = normalizeCurrencyInput(value);
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  const amount = Number(normalizedValue);
+
+  if (!Number.isFinite(amount)) {
+    return value;
+  }
+
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 /**
