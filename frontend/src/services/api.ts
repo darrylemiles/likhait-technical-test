@@ -6,6 +6,22 @@ import { Expense, ExpenseFormData } from "../types";
 
 const API_BASE_URL = "http://localhost:3000/api";
 
+export interface Category {
+  id: number;
+  name: string;
+}
+
+export function normalizeCategoryName(name: string): string {
+  return name.trim();
+}
+
+function hasMatchingCategory(categories: Category[], name: string): Category | undefined {
+  const normalizedName = normalizeCategoryName(name).toLowerCase();
+  return categories.find(
+    (category) => normalizeCategoryName(category.name).toLowerCase() === normalizedName,
+  );
+}
+
 /**
  * Fetch all expenses
  */
@@ -37,7 +53,7 @@ export async function getExpenses(
  * Fetch all categories
  */
 export async function fetchCategories(): Promise<
-  Array<{ id: number; name: string }>
+  Category[]
 > {
   const response = await fetch(`${API_BASE_URL}/categories`);
   if (!response.ok) {
@@ -47,17 +63,73 @@ export async function fetchCategories(): Promise<
 }
 
 /**
+ * Create a new category
+ */
+export async function createCategory(name: string): Promise<Category> {
+  const normalizedName = normalizeCategoryName(name);
+
+  const response = await fetch(`${API_BASE_URL}/categories`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ category: { name: normalizedName } }),
+  });
+
+  if (!response.ok) {
+    let errorMessage = "Failed to create category";
+    try {
+      const data = await response.json();
+      if (Array.isArray(data?.errors) && data.errors.length > 0) {
+        errorMessage = data.errors.join(", ");
+      }
+    } catch {
+      // Keep fallback error message when response body is not JSON.
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+}
+
+/**
+ * Delete a category
+ */
+export async function deleteCategory(id: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    let errorMessage = "Failed to delete category";
+    try {
+      const data = await response.json();
+      if (Array.isArray(data?.errors) && data.errors.length > 0) {
+        errorMessage = data.errors.join(", ");
+      }
+    } catch {
+      // Keep fallback error message when response body is not JSON.
+    }
+    throw new Error(errorMessage);
+  }
+}
+
+/**
  * Create a new expense
  */
 export async function createExpense(data: ExpenseFormData): Promise<Expense> {
   // Convert category name to category_id
   const categories = await fetchCategories();
-  const category = categories.find((c) => c.name === data.category);
+  const category = hasMatchingCategory(categories, data.category);
+
+  if (!category) {
+    throw new Error("Category is required");
+  }
 
   const expenseData = {
     description: data.description,
     amount: data.amount,
-    category_id: category?.id,
+    category_id: category.id,
     date: data.date,
   };
 
@@ -83,12 +155,31 @@ export async function updateExpense(
   id: number,
   data: Partial<ExpenseFormData>,
 ): Promise<Expense> {
+  let categoryId: number | undefined;
+  if (data.category !== undefined) {
+    const categories = await fetchCategories();
+    const category = hasMatchingCategory(categories, data.category);
+
+    if (!category) {
+      throw new Error("Category is required");
+    }
+
+    categoryId = category.id;
+  }
+
+  const expenseData = {
+    ...(data.description !== undefined && { description: data.description }),
+    ...(data.amount !== undefined && { amount: data.amount }),
+    ...(data.date !== undefined && { date: data.date }),
+    ...(categoryId !== undefined && { category_id: categoryId }),
+  };
+
   const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ expense: data }),
+    body: JSON.stringify({ expense: expenseData }),
   });
 
   if (!response.ok) {
