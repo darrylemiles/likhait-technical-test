@@ -14,7 +14,7 @@ import {
   normalizeCategoryName,
 } from "../services/api";
 import { ManageCategoriesModal } from "./ManageCategoriesModal";
-import { getTodayDateString } from "../utils/expenseUtils";
+import { formatCurrencyInput, getTodayDateString } from "../utils/expenseUtils";
 
 interface ExpenseFormProps {
   initialData?: Partial<ExpenseFormData>;
@@ -132,16 +132,21 @@ export function ExpenseForm({
     }
   };
 
+  const handleAmountBlur = () => {
+    handleChange("amount", formatCurrencyInput(formData.amount));
+  };
+
   return (
     <>
       <form onSubmit={handleSubmit} style={formStyle}>
         <TextField
-          label="Amount"
-          type="number"
-          step="0.01"
+          label="Amount ($)"
+          type="text"
+          inputMode="decimal"
           placeholder="0.00"
           value={formData.amount}
           onChange={(e) => handleChange("amount", e.target.value)}
+          onBlur={handleAmountBlur}
           error={errors.amount}
           fullWidth
           required

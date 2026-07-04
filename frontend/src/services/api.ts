@@ -3,6 +3,7 @@
  */
 
 import { Expense, ExpenseFormData } from "../types";
+import { normalizeCurrencyInput } from "../utils/expenseUtils";
 
 const API_BASE_URL = "http://localhost:3000/api";
 
@@ -126,7 +127,7 @@ export async function createExpense(data: ExpenseFormData): Promise<Expense> {
 
   const expenseData = {
     description: data.description,
-    amount: data.amount,
+    amount: normalizeCurrencyInput(data.amount),
     category_id: category.id,
     date: data.date,
   };
@@ -167,7 +168,9 @@ export async function updateExpense(
 
   const expenseData = {
     ...(data.description !== undefined && { description: data.description }),
-    ...(data.amount !== undefined && { amount: data.amount }),
+    ...(data.amount !== undefined && {
+      amount: normalizeCurrencyInput(data.amount),
+    }),
     ...(data.date !== undefined && { date: data.date }),
     ...(categoryId !== undefined && { category_id: categoryId }),
   };

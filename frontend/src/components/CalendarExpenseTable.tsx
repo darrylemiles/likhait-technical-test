@@ -71,6 +71,7 @@ export function CalendarExpenseTable({
 
   const tableStyle: React.CSSProperties = {
     width: "100%",
+    tableLayout: "fixed",
     borderCollapse: "collapse",
     backgroundColor: COLORS.background.main,
     borderRadius: "0.5rem",
@@ -96,6 +97,14 @@ export function CalendarExpenseTable({
     color: COLORS.text.primary,
   };
 
+  const ellipsisStyle: React.CSSProperties = {
+    display: "block",
+    maxWidth: "100%",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  };
+
   const emptyStyle: React.CSSProperties = {
     padding: "2rem",
     textAlign: "center",
@@ -111,7 +120,7 @@ export function CalendarExpenseTable({
     return (
       <div style={tableStyle}>
         <div style={emptyStyle}>
-          No expenses found. Add your first expense to get started!
+          No expenses found. Add your first expense for this month to get started!
         </div>
       </div>
     );
@@ -122,28 +131,38 @@ export function CalendarExpenseTable({
       <table style={tableStyle}>
         <thead style={theadStyle}>
           <tr>
-            <th style={thStyle}>Date</th>
+            <th style={{ ...thStyle, width: "120px" }}>Date</th>
             <th style={thStyle}>Description</th>
-            <th style={thStyle}>Category</th>
-            <th style={thStyle}>Amount</th>
-            <th style={{ ...thStyle, textAlign: "center" }}>Actions</th>
+            <th style={{ ...thStyle, width: "22%" }}>Category</th>
+            <th style={{ ...thStyle, width: "130px" }}>Amount</th>
+            <th style={{ ...thStyle, width: "150px", textAlign: "center" }}>
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
           {currentExpenses.map((expense) => (
             <tr key={expense.id}>
               <td style={tdStyle}>{formatDate(new Date(expense.date))}</td>
-              <td style={tdStyle}>{expense.description}</td>
+              <td style={tdStyle}>
+                <span style={ellipsisStyle} title={expense.description}>
+                  {expense.description}
+                </span>
+              </td>
               <td style={tdStyle}>
                 <span
+                  title={expense.category}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: "0.5rem",
+                    minWidth: 0,
                   }}
                 >
-                  <span>{getCategoryEmoji(expense.category)}</span>
-                  <span>{expense.category}</span>
+                  <span style={{ flexShrink: 0 }}>
+                    {getCategoryEmoji(expense.category)}
+                  </span>
+                  <span style={ellipsisStyle}>{expense.category}</span>
                 </span>
               </td>
               <td style={{ ...tdStyle, textAlign: "left", fontWeight: 600 }}>

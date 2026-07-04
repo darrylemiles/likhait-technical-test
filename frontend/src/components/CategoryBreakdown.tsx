@@ -1,6 +1,7 @@
 import React from "react";
 import { CATEGORY_EMOJIS } from "../constants/categoryEmojis";
 import { COLORS } from "../constants/colors";
+import { formatCurrency } from "../utils/expenseUtils";
 
 interface CategoryData {
   category: string;
@@ -20,9 +21,12 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   totalCount,
 }) => {
   const [isCollapsed, setIsCollapsed] = React.useState(true);
+  const hasTransactions = totalCount > 0;
 
-  const formatAmount = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
+  const toggleCollapsed = () => {
+    if (hasTransactions) {
+      setIsCollapsed((prev) => !prev);
+    }
   };
 
   const containerStyle: React.CSSProperties = {
@@ -39,7 +43,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     gap: "12px",
     borderBottom: `1px solid ${COLORS.secondary.s04}`,
     background: COLORS.secondary.s01,
-    cursor: "pointer",
+    cursor: hasTransactions ? "pointer" : "default",
   };
 
   const totalLabelStyle: React.CSSProperties = {
@@ -136,51 +140,53 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     <div style={containerStyle}>
       <div
         style={totalStyle}
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        role="button"
-        tabIndex={0}
+        onClick={toggleCollapsed}
+        role={hasTransactions ? "button" : undefined}
+        tabIndex={hasTransactions ? 0 : undefined}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
+          if (hasTransactions && (e.key === "Enter" || e.key === " ")) {
             e.preventDefault();
-            setIsCollapsed(!isCollapsed);
+            toggleCollapsed();
           }
         }}
       >
         <span style={totalLabelStyle}>TOTAL:</span>
-        <span style={totalAmountStyle}>{formatAmount(total)}</span>
+        <span style={totalAmountStyle}>{formatCurrency(total)}</span>
         <span style={totalCountStyle}>({totalCount} transactions)</span>
-        <button
-          style={toggleButtonStyle}
-          aria-label={isCollapsed ? "Expand" : "Collapse"}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsCollapsed(!isCollapsed);
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = COLORS.secondary.s04;
-            e.currentTarget.style.color = COLORS.secondary.s10;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = COLORS.secondary.s03;
-            e.currentTarget.style.color = COLORS.secondary.s08;
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            style={{
-              transform: isCollapsed ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.2s",
+        {hasTransactions && (
+          <button
+            style={toggleButtonStyle}
+            aria-label={isCollapsed ? "Expand" : "Collapse"}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleCollapsed();
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = COLORS.secondary.s04;
+              e.currentTarget.style.color = COLORS.secondary.s10;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = COLORS.secondary.s03;
+              e.currentTarget.style.color = COLORS.secondary.s08;
             }}
           >
-            <path d="M8 11l-5-5h10z" />
-          </svg>
-        </button>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              style={{
+                transform: isCollapsed ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s",
+              }}
+            >
+              <path d="M8 11l-5-5h10z" />
+            </svg>
+          </button>
+        )}
       </div>
 
-      {!isCollapsed && (
+      {hasTransactions && !isCollapsed && (
         <div style={listStyle}>
           {categories.map((category) => (
             <div
@@ -210,7 +216,9 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                   </div>
                 </div>
               </div>
-              <div style={itemAmountStyle}>{formatAmount(category.amount)}</div>
+              <div style={itemAmountStyle}>
+                {formatCurrency(category.amount)}
+              </div>
             </div>
           ))}
         </div>
