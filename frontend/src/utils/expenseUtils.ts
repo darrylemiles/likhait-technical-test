@@ -29,6 +29,20 @@ export function formatDate(date: Date): string {
 }
 
 /**
+ * Get today's date in the user's local timezone.
+ */
+export function getTodayDateString(): string {
+  return formatDate(new Date());
+}
+
+/**
+ * Check whether a YYYY-MM-DD date string is after today.
+ */
+export function isFutureDate(date: string): boolean {
+  return date > getTodayDateString();
+}
+
+/**
  * Get days in month
  */
 export function getDaysInMonth(year: number, month: number): number {

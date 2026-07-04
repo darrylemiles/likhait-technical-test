@@ -16,17 +16,38 @@ const HistoryPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
 
+  const getCurrentYearMonth = () => {
+    const currentDate = new Date();
+
+    return {
+      year: currentDate.getFullYear(),
+      month: currentDate.getMonth() + 1,
+    };
+  };
+
+  const clampYearMonthToToday = (year: number, month: number) => {
+    const current = getCurrentYearMonth();
+
+    if (
+      year > current.year ||
+      (year === current.year && month > current.month)
+    ) {
+      return current;
+    }
+
+    return { year, month };
+  };
+
   // Get year and month from URL params, default to current date if not provided
   const getInitialYearMonth = () => {
     const params = new URLSearchParams(window.location.search);
-    const currentDate = new Date();
+    const current = getCurrentYearMonth();
     const yearParam = params.get("year");
     const monthParam = params.get("month");
+    const parsedYear = yearParam ? parseInt(yearParam) : current.year;
+    const parsedMonth = monthParam ? parseInt(monthParam) : current.month;
 
-    return {
-      year: yearParam ? parseInt(yearParam) : currentDate.getFullYear(),
-      month: monthParam ? parseInt(monthParam) : currentDate.getMonth() + 1,
-    };
+    return clampYearMonthToToday(parsedYear, parsedMonth);
   };
 
   const initial = getInitialYearMonth();
@@ -64,13 +85,19 @@ const HistoryPage: React.FC = () => {
   };
 
   const handleYearChange = (year: number) => {
-    setSelectedYear(year);
-    updateURL(year, selectedMonth);
+    const next = clampYearMonthToToday(year, selectedMonth);
+
+    setSelectedYear(next.year);
+    setSelectedMonth(next.month);
+    updateURL(next.year, next.month);
   };
 
-  const handleMonthChange = (month: number) => {
-    setSelectedMonth(month);
-    updateURL(selectedYear, month);
+  const handleMonthChange = (month: number, year = selectedYear) => {
+    const next = clampYearMonthToToday(year, month);
+
+    setSelectedYear(next.year);
+    setSelectedMonth(next.month);
+    updateURL(next.year, next.month);
   };
 
   const handleAddExpense = async (data: ExpenseFormData) => {
